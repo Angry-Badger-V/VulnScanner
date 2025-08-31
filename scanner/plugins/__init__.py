@@ -1,8 +1,10 @@
 import importlib
 import pkgutil
-from scanner.plugins.base import BasePlugin
+from .base import BasePlugin
+
 
 REGISTRY = {}
+
 
 def detect_plugins():
     package = __name__
@@ -10,8 +12,9 @@ def detect_plugins():
         module = importlib.import_module(f"{package}.{module_name}")
         if hasattr(module, "Plugin"):
             plugin = module.Plugin()
-            if not isinstance(plugin, B):
+            if not isinstance(plugin, BasePlugin):
                 raise TypeError(f"Plugin {module_name} must inherit from BasePlugin")
             REGISTRY[module_name] = plugin
+
 
 detect_plugins()
