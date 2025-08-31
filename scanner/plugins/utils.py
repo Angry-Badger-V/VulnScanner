@@ -1,5 +1,5 @@
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Comment
 import hashlib
 
 
@@ -77,6 +77,6 @@ def recon(session: requests.Session, target: str):
 
     result["links"] = [a.get('href') for a in soup.find_all('a') if a.get('href')]
 
-    result["comments"] = [comment for comment in soup.find_all(string=lambda text: isinstance(text, BeautifulSoup.Comment))]
+    result["comments"] = [c for c in soup.find_all(string=lambda text: isinstance(text, Comment))]
 
     return result
