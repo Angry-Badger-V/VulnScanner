@@ -1,6 +1,42 @@
 import requests
 from bs4 import BeautifulSoup, Comment
 import hashlib
+import re
+
+
+SQL_ERRORS = {
+    "MySQL": [
+        r"SQL syntax.*MySQL",
+        r"Warning.*mysql_",
+        r"valid MySQL result",
+    ],
+    "PostgreSQL": [
+        r"PostgreSQL.*ERROR",
+        r"Warning.*pg_",
+        r"valid PostgreSQL result",
+    ],
+    "SQL Server": [
+        r"SQL Server.*Driver",
+        r"Warning.*mssql_",
+        r"Microsoft SQL Server.*",
+        r"Unclosed quotation mark after the character string",
+    ],
+    "Oracle": [
+        r"ORA-\d{5}",
+        r"Oracle error",
+    ],
+    "SQLite": [
+        r"SQLite.*Exception",
+        r"System\.Data\.SQLite\.SQLiteException",
+    ],
+    "ODBC": [
+        r"ODBC.*Drivers",
+        r"Warning.*odbc_",
+    ],
+    "Generic": [
+        r"Fatal error",
+    ],
+}
 
 
 def send_request(session: requests.Session, url: str, method: str = "GET", **kwargs):
@@ -34,15 +70,8 @@ def recon(session: requests.Session, target: str):
     if baseline is None:
         return None
     
-    baseline_fingerprint = response_fingerprint(baseline)
-
     result = {
-        "url": target,
-        "status_code": baseline_fingerprint[0],
-        "content_length": baseline_fingerprint[1],
-        "hash": baseline_fingerprint[2],
         "headers": dict(baseline.headers),
-        "cookies": session.cookies.get_dict(),
         "security_headers": {},
         "forms": [],
         "scripts": [],
@@ -79,4 +108,17 @@ def recon(session: requests.Session, target: str):
 
     result["comments"] = [c for c in soup.find_all(string=lambda text: isinstance(text, Comment))]
 
-    return result
+    return baseline, result
+
+
+def contains_error(resp):
+    if not resp or not hasattr(resp, "text"):
+        return False, None, None
+    
+    body = resp.text
+    for db, error_messages in SQL_ERRORS.items():
+        for error_message in error_messages:
+            if re.search(error_message, body, re.IGNORECASE):
+                return True, db, error_message
+            
+    return False, None, None

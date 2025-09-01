@@ -7,7 +7,7 @@ from plugins import utils
 def run_scanner(url, selected_modules=None):
     session = requests.Session()
 
-    reconnaissance = utils.recon(session, url)
+    baseline, reconnaissance = utils.recon(session, url)
     if reconnaissance is None:
         print("Failed to perform reconnaissance on the target.")
         return None
@@ -20,7 +20,7 @@ def run_scanner(url, selected_modules=None):
     results = {}
     for key, plugin in to_run.items():
         print(f"Running {plugin.name}")
-        findings = plugin.run(url, session, reconnaissance)
+        findings = plugin.run(url, session, baseline, reconnaissance)
         results[plugin.name] = findings
     
     return results

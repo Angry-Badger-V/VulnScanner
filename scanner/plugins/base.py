@@ -8,7 +8,7 @@ class BasePlugin(ABC):
     description: str = "No description provided."
 
     @abstractmethod
-    def run(self, target: str, session, reconnaissance):
+    def run(self, target: str, session, baseline, reconnaissance):
         """Run the vulnerability scan on the target.
         Must return a list of findings (or empty if none)."""
         pass
